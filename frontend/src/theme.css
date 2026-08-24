@@ -1,0 +1,54 @@
+@import url("https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap");
+
+:root {
+  --bg: oklch(98% 0.008 85);
+  --surface: oklch(100% 0 0);
+  --text: oklch(24% 0.02 264);
+  --text-2: oklch(52% 0.02 264);
+  --text-3: oklch(70% 0.015 264);
+  --border: oklch(92% 0.012 90);
+  --mint: oklch(72% 0.13 155);
+  --mint-deep: oklch(46% 0.11 155);
+  --mint-tint: oklch(94% 0.035 155);
+  --coral: oklch(74% 0.13 40);
+  --coral-deep: oklch(50% 0.12 40);
+  --coral-tint: oklch(95% 0.03 40);
+  --lav: oklch(72% 0.1 275);
+  --lav-deep: oklch(48% 0.1 275);
+  --lav-tint: oklch(95% 0.02 275);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+button {
+  font-family: inherit;
+}
+
+.num {
+  font-family: "Sora", system-ui, sans-serif;
+}
+
+.screen {
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100vh;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}

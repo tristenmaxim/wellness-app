@@ -60,6 +60,7 @@ jobs:
           OPENROUTER_API_KEY=${{ secrets.OPENROUTER_API_KEY }}
           TELEGRAM_BOT_TOKEN=${{ secrets.TELEGRAM_BOT_TOKEN }}
           USDA_API_KEY=${{ secrets.USDA_API_KEY }}
+          JWT_SECRET=${{ secrets.JWT_SECRET }}
           EOF
 
       - name: Sync project to server
