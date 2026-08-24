@@ -9,7 +9,12 @@ from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.database import get_db
-from app.models import User
+from app.models import Goal, User
+
+# Matches the "Поддержание" (maintain) preset on the Goals screen — a new
+# user always has a target from their very first session, so the home
+# screen's progress ring is never blank before they've visited Goals.
+DEFAULT_GOAL = {"daily_kcal": 2100, "protein_g": 100, "fat_g": 70, "carbs_g": 230}
 
 JWT_ALG = "HS256"
 JWT_TTL_SECONDS = 30 * 24 * 3600
@@ -88,6 +93,8 @@ def upsert_user(db: Session, tg_user: dict) -> User:
             photo_url=photo_url,
         )
         db.add(user)
+        db.flush()
+        db.add(Goal(user_id=user.id, **DEFAULT_GOAL))
     else:
         user.first_name = first_name
         user.username = username
