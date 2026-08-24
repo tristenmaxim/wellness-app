@@ -112,6 +112,14 @@ PWA-приложение, открывается из Telegram-бота (Telegra
 - Telegram Bot API — токен бота для Mini App и авторизации (ожидается от пользователя)
 - Хостинг: сервер 146.103.109.188, домен wellness.maxtristen.com (DNS через Porkbun) — доступ подтверждён, поддомен пока не настроен в nginx
 
+## Репозиторий и CI/CD
+
+- Репозиторий: [github.com/tristenmaxim/wellness-app](https://github.com/tristenmaxim/wellness-app) (публичный)
+- CI/CD: GitHub Actions (`.github/workflows/deploy.yml`) — build-проверка на каждый push/PR, деплой на `/opt/wellness` на 146.103.109.188 при push в `main` (rsync + `docker compose up -d --build`)
+- SSH-доступ CI отдельным ключом (не личным), добавлен в `root@146.103.109.188:~/.ssh/authorized_keys`
+- Секреты репозитория выставлены: `DEPLOY_SSH_KEY`, `DEPLOY_USER`, `DEPLOY_HOST`, `POSTGRES_PASSWORD`
+- Не выставлены (ждут от пользователя): `OPENROUTER_API_KEY`, `TELEGRAM_BOT_TOKEN`, `USDA_API_KEY`
+
 ## Milestones
 
 | Date | Milestone |
