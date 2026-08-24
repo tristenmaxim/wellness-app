@@ -35,7 +35,14 @@ jobs:
 
       - name: Import check backend
         working-directory: backend
-        run: python -c "import main"
+        env:
+          DATABASE_URL: sqlite:////tmp/ci.db
+          JWT_SECRET: ci
+          TELEGRAM_BOT_TOKEN: ci
+          OPENROUTER_API_KEY: ci
+          USDA_API_KEY: ci
+          PHOTOS_DIR: /tmp/ci-photos
+        run: python -c "import app.main"
 
   deploy:
     needs: build
