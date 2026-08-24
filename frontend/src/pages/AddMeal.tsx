@@ -18,6 +18,28 @@ function guessMealType(): string {
   return "dinner";
 }
 
+async function compressPhoto(file: File, maxDim = 1600, maxBytes = 1_000_000): Promise<File> {
+  const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
+  const scale = Math.min(1, maxDim / Math.max(bitmap.width, bitmap.height));
+  const width = Math.round(bitmap.width * scale);
+  const height = Math.round(bitmap.height * scale);
+
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  canvas.getContext("2d")!.drawImage(bitmap, 0, 0, width, height);
+
+  let quality = 0.85;
+  let blob: Blob | null = null;
+  for (let i = 0; i < 6; i++) {
+    blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", quality));
+    if (!blob || blob.size <= maxBytes || quality <= 0.4) break;
+    quality -= 0.15;
+  }
+  if (!blob) return file;
+  return new File([blob], "photo.jpg", { type: "image/jpeg" });
+}
+
 export default function AddMeal() {
   const navigate = useNavigate();
   const [tab, setTab] = useState<"photo" | "text">("photo");
@@ -48,9 +70,16 @@ export default function AddMeal() {
     }
   }
 
-  function onPhotoSelected(e: React.ChangeEvent<HTMLInputElement>) {
+  async function onPhotoSelected(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
-    if (file) runAnalyze({ photo: file });
+    if (!file) return;
+    let toUpload = file;
+    try {
+      toUpload = await compressPhoto(file);
+    } catch {
+      // browser couldn't decode/compress — send the original and let the backend try
+    }
+    runAnalyze({ photo: toUpload });
   }
 
   function adjustWeight(itemId: string, deltaG: number) {
