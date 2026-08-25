@@ -1,3 +1,5 @@
+import { getTelegramWebApp, isInTelegram } from "./telegram";
+
 const TOKEN_KEY = "wellness_token";
 
 export function getToken(): string | null {
@@ -12,7 +14,32 @@ export function clearToken() {
   localStorage.removeItem(TOKEN_KEY);
 }
 
-async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+// Telegram's iOS WebView occasionally swaps to a fresh instance right after
+// the Mini App is opened (preview → full-screen promotion), which can leave
+// localStorage empty even though the session is only seconds old. When that
+// happens the app still has `Telegram.WebApp.initData` in memory, so we can
+// silently re-authenticate and retry once instead of bouncing the user back
+// to a login screen.
+async function reauth(): Promise<boolean> {
+  if (!isInTelegram()) return false;
+  const wa = getTelegramWebApp();
+  if (!wa?.initData) return false;
+  try {
+    const resp = await fetch("/api/auth/telegram-init", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ init_data: wa.initData }),
+    });
+    if (!resp.ok) return false;
+    const { token } = await resp.json();
+    setToken(token);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function request<T>(path: string, options: RequestInit = {}, retried = false): Promise<T> {
   const token = getToken();
   const headers = new Headers(options.headers);
   if (token) headers.set("Authorization", `Bearer ${token}`);
@@ -21,6 +48,11 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   }
 
   const resp = await fetch(`/api${path}`, { ...options, headers });
+
+  if (resp.status === 401 && !retried && !path.startsWith("/auth/")) {
+    if (await reauth()) return request<T>(path, options, true);
+  }
+
   if (!resp.ok) {
     const detail = await resp.text();
     throw new Error(`${resp.status}: ${detail}`);
