@@ -24,10 +24,11 @@ _FORM_QUALIFIERS = (
 def _pick_best_match(query: str, foods: list[dict]) -> dict | None:
     query_lower = query.lower()
     query_words = set(query_lower.split())
+    requested_qualifiers = query_words & set(_FORM_QUALIFIERS)
 
     def is_plain_form(food: dict) -> bool:
         desc = food.get("description", "").lower()
-        if any(q in query_words for q in _FORM_QUALIFIERS):
+        if requested_qualifiers:
             return True  # user explicitly asked for that form
         return not any(qual in desc for qual in _FORM_QUALIFIERS)
 
@@ -38,6 +39,10 @@ def _pick_best_match(query: str, foods: list[dict]) -> dict | None:
         desc = food.get("description", "").lower()
         return desc.startswith(query_lower) or desc.startswith(query_lower.rstrip("s"))
 
+    def matches_requested_qualifiers(food: dict) -> bool:
+        desc = food.get("description", "").lower()
+        return all(q in desc for q in requested_qualifiers)
+
     plain_matches = [f for f in foods if is_plain_form(f)]
     candidates = plain_matches or foods
 
@@ -45,7 +50,39 @@ def _pick_best_match(query: str, foods: list[dict]) -> dict | None:
     if prefix_matches:
         return min(prefix_matches, key=lambda f: len(f.get("description", "")))
 
+    if requested_qualifiers:
+        qualifier_matches = [f for f in candidates if matches_requested_qualifiers(f)]
+        if qualifier_matches:
+            return min(qualifier_matches, key=lambda f: len(f.get("description", "")))
+
     return candidates[0] if candidates else None
+
+
+def _extract_nutrients(food: dict, weight_g: float) -> dict | None:
+    """Pull per-100g Energy/Protein/Fat/Carbs from a USDA food record and scale to weight_g.
+
+    USDA can list the same nutrientName twice under different units (e.g.
+    "Energy" in both KCAL and kJ) — key on (name, unit) so a plain name
+    lookup can't silently grab the wrong-unit entry.
+    """
+    nutrients = {
+        (n["nutrientName"], n["unitName"]): n["value"] for n in food.get("foodNutrients", [])
+    }
+    energy = nutrients.get(("Energy", "KCAL"))
+    protein = nutrients.get(("Protein", "G"))
+    fat = nutrients.get(("Total lipid (fat)", "G"))
+    carbs = nutrients.get(("Carbohydrate, by difference", "G"))
+
+    if energy is None:
+        return None
+
+    scale = weight_g / 100.0
+    return {
+        "kcal": round(energy * scale, 1),
+        "protein_g": round((protein or 0) * scale, 1),
+        "fat_g": round((fat or 0) * scale, 1),
+        "carbs_g": round((carbs or 0) * scale, 1),
+    }
 
 
 async def lookup_usda(name: str, weight_g: float) -> dict | None:
@@ -72,24 +109,4 @@ async def lookup_usda(name: str, weight_g: float) -> dict | None:
     if best is None:
         return None
 
-    # USDA can list the same nutrientName twice under different units (e.g.
-    # "Energy" in both KCAL and kJ) — key on (name, unit) so a plain name
-    # lookup can't silently grab the wrong-unit entry.
-    nutrients = {
-        (n["nutrientName"], n["unitName"]): n["value"] for n in best.get("foodNutrients", [])
-    }
-    energy = nutrients.get(("Energy", "KCAL"))
-    protein = nutrients.get(("Protein", "G"))
-    fat = nutrients.get(("Total lipid (fat)", "G"))
-    carbs = nutrients.get(("Carbohydrate, by difference", "G"))
-
-    if energy is None:
-        return None
-
-    scale = weight_g / 100.0
-    return {
-        "kcal": round(energy * scale, 1),
-        "protein_g": round((protein or 0) * scale, 1),
-        "fat_g": round((fat or 0) * scale, 1),
-        "carbs_g": round((carbs or 0) * scale, 1),
-    }
+    return _extract_nutrients(best, weight_g)

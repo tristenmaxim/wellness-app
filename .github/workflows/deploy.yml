@@ -31,9 +31,9 @@ jobs:
       - name: Install backend deps
         working-directory: backend
         run: |
-          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
 
-      - name: Import check backend
+      - name: Backend tests
         working-directory: backend
         env:
           DATABASE_URL: sqlite:////tmp/ci.db
@@ -42,7 +42,7 @@ jobs:
           OPENROUTER_API_KEY: ci
           USDA_API_KEY: ci
           PHOTOS_DIR: /tmp/ci-photos
-        run: python -c "import app.main"
+        run: pytest -q
 
   deploy:
     needs: build
