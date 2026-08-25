@@ -172,32 +172,46 @@ export default function AddMeal() {
 
         {tab === "photo" ? (
           <div
-            onClick={() => fileInputRef.current?.click()}
             style={{
               border: "2px dashed var(--border)",
               borderRadius: 24,
-              padding: "44px 20px",
+              padding: "32px 20px",
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
-              gap: 14,
+              gap: 18,
               background: "var(--surface)",
-              cursor: "pointer",
             }}
           >
             <input ref={fileInputRef} type="file" accept="image/*" capture="environment" hidden onChange={onPhotoSelected} />
-            <div style={{ width: 64, height: 64, borderRadius: "50%", background: "var(--mint-tint)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--mint-deep)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <div style={{ fontSize: 14.5, fontWeight: 600, textAlign: "center", color: "var(--text-2)" }}>
+              Сфотографируйте еду или загрузите фото
+            </div>
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              style={{
+                width: "100%",
+                height: 56,
+                borderRadius: 100,
+                border: "none",
+                background: "var(--mint-deep)",
+                color: "white",
+                fontSize: 15.5,
+                fontWeight: 700,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 10,
+                cursor: "pointer",
+              }}
+            >
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="3" y="6" width="18" height="14" rx="2" />
                 <circle cx="12" cy="13" r="3.5" />
                 <path d="M9 6l1-2h4l1 2" />
               </svg>
-            </div>
-            <div style={{ fontSize: 14.5, fontWeight: 600, textAlign: "center" }}>
-              Сфотографируйте еду
-              <br />
-              или загрузите фото
-            </div>
+              Сделать фото
+            </button>
             <div style={{ fontSize: 12.5, color: "var(--text-3)" }}>JPG, PNG до 10 МБ</div>
           </div>
         ) : (
